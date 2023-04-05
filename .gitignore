@@ -1,4 +1,4 @@
 julia*
 input*
-*.toml
 test*
+.CondaPkg*
