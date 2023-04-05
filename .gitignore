@@ -2,3 +2,5 @@ julia*
 input*
 test*
 .CondaPkg*
+.directory
+.JuliaFormatter.toml
