@@ -4,3 +4,4 @@ test*
 .CondaPkg*
 .directory
 .JuliaFormatter.toml
+*.gif
