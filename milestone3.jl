@@ -1,7 +1,7 @@
 import Plots
 import DelimitedFiles
 using Infiltrator
-include("milestone2_solution_julia.jl")
+include("milestone2.jl")
 
 geo_dat = read_geography("input/The_World128x65.dat")
 
