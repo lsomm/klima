@@ -102,11 +102,11 @@ C = calc_heat_capacity(geo_dat)
 S_sol = calc_solar_forcing(calc_albedo(geo_dat), read_true_longitude("input/True_Longitude.dat"))
 #S_sol = readdlm("solar_forcing_averages.txt")
 S_sol_quer = zeros(48)
+n_latitude = 65
+n_longitude = 128
 for t = 1:48    
     S_sol_quer[t] = calc_mean(S_sol[:,:,t],calc_area(n_latitude,n_longitude),n_latitude,n_longitude)
 end
-n_latitude = 65
-n_longitude = 128
 T_initial = 5.0
 steps = 50
 eps = 10^(-5)
