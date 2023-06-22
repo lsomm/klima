@@ -3,9 +3,7 @@ include("milestone2.jl")
 include("milestone3.jl")
 
 using Arpack: eigs
-using SparseArrays: sparse
-using LinearAlgebra
-using Infiltrator
+
 struct Mesh
     n_latitude::Int
     n_longitude::Int
@@ -180,62 +178,36 @@ function timestep_euler_forward_2d(temperature, t, delta_t,
 
     temperature[:, :, t] = temperature[:, :, t_old] +
                            delta_t * calc_rhs_ebm_2d(temperature[:, :, t_old], mesh,
-                                                     diffusion_coeff, heat_capacity,
-                                                     solar_forcing[:, :, t_old],
-                                                     radiative_cooling)
+                                           diffusion_coeff, heat_capacity,
+                                           solar_forcing[:, :, t_old],
+                                           radiative_cooling)
 end
 
-function timestep_euler_backward_2d(temperature, t, heat_capacity,
-    solar_forcing, radiative_cooling, lu_decomposition)
-    
-    source_terms = calc_source_terms_ebm_2d(heat_capacity,solar_forcing[:,:,t], radiative_cooling)
-    
-    source_terms = vec(source_terms)
-    
-    
-    
-    if t > 1
-        T_old = temperature[:,:,t - 1]
-    else
-        T_old = temperature[:,:,end]
-    end
-    T_old = vec(T_old)
-    sol = zeros(8320)
-    ldiv!(sol, lu_decomposition, (T_old .+ source_terms))
-    #T_new = M \ (T_old .+ source_terms)
-    temperature[:,:,t] = reshape(sol, (65,128))
-    
-end
-
-
-
-function compute_equilibrium_2d(mesh, heat_capacity,
-                                solar_forcing, radiative_cooling, jacobian;
-                                max_iterations=1, rel_error=2e-5, verbose=true)
+function compute_equilibrium_2d(timestep_function, mesh, diffusion_coeff, heat_capacity,
+                                solar_forcing, radiative_cooling;
+                                max_iterations=100, rel_error=2e-5, verbose=true,
+                                initial_temperature=zeros((mesh.n_latitude,
+                                                           mesh.n_longitude,
+                                                           size(solar_forcing, 3))))
     # Number of time steps per year
     ntimesteps = size(solar_forcing, 3)
-    #println(ntimesteps)
 
     # Step size
     delta_t = 1 / ntimesteps
-
-    # We start with a constant temperature of 0 in every grid point throughout the year
-    temperature = zeros((mesh.n_latitude, mesh.n_longitude, ntimesteps))
+    temperature = initial_temperature
 
     # Area-mean in every time step
     area_mean_temp = zeros(ntimesteps)
 
     # Average temperature over all time steps from the previous iteration to approximate the error
     old_avg_temperature = 0
-    M = ones(8320,8320)-delta_t .* jacobian
-    lu_decomposition = lu(M)
+
     for i in 1:max_iterations
         for t in 1:ntimesteps
-            timestep_euler_backward_2d(temperature, t,
-                             heat_capacity, solar_forcing,
-                              radiative_cooling, lu_decomposition)
-            @infiltrate
-            area_mean_temp[t] = calc_mean(temperature[:, :, t], mesh.area)
+            timestep_function(temperature, t, delta_t,
+                              mesh, diffusion_coeff, heat_capacity, solar_forcing,
+                              radiative_cooling)
+            @views area_mean_temp[t] = calc_mean(temperature[:, :, t], mesh.area)
         end
 
         avg_temperature = sum(area_mean_temp) / ntimesteps
@@ -297,8 +269,7 @@ function calc_jacobian_ebm_2d(mesh, diffusion_coeff, heat_capacity)
         index += 1
     end
 
-    return sparse(jacobian)
-
+    return jacobian
 end
 
 # Run code
@@ -315,16 +286,25 @@ function milestone5()
 
     # Compute and plot diffusion coefficient
     diffusion_coeff = calc_diffusion_coefficients(geo_dat)
+    plot_diffusion_coefficient(diffusion_coeff)
 
     co2_ppm = 315.0
     radiative_cooling = calc_radiative_cooling_co2(co2_ppm)
-    jacobian = calc_jacobian_ebm_2d(mesh, diffusion_coeff, heat_capacity)
 
-    compute_equilibrium_2d(mesh, 
+    compute_equilibrium_2d(timestep_euler_forward_2d, mesh, diffusion_coeff,
                            heat_capacity, solar_forcing,
-                           radiative_cooling,jacobian, max_iterations=10)
+                           radiative_cooling, max_iterations=2)
 
+    # The Jacobian has three diagonals of non-zero entries and two blocks of non-zero entries for the poles.
+    # We only show a subset of the entries, otherwise the two side diagonals are not visible.
+    jacobian = calc_jacobian_ebm_2d(mesh, diffusion_coeff, heat_capacity)
+    display(spy(jacobian[1:300, 1:300]))
 
+    println("Done with Jacobian")
+
+    # This computes only the 6 eigenvalues with largest magnitude and no eigenvectors
+    eigenvalues, _ = eigs(jacobian, ritzvec=false)
+
+    # The maximum absolute value of the eigenvalues is too high for an efficient explicit time integration scheme.
+    print(max(maximum(real.(eigenvalues)), -minimum(real.(eigenvalues))))
 end
-
-milestone5()
