@@ -34,7 +34,7 @@ function plot_sphere(surface_data, radius)
                 )
             )
     
-    plot(fig, layout)   
+    PlotlyJS.plot(fig, layout)   
     end
 
 geo = readdlm("input/The_World128x65.dat")
