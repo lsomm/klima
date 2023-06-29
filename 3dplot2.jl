@@ -1,10 +1,9 @@
 using PlotlyJS
 using DelimitedFiles
 
-
+include("milestone2.jl")
 # TODO
 # animation/gif/slider/schieberegler
-# Nur Ränder plotten als Unterlage
 # In Klimakoffer einbauen / Temperatur/etc plots damit machen
 # Grid anzeigen?
 # Welt höher aufgelöst
@@ -122,12 +121,7 @@ function plot_data_field(data_field, surface_data, radius=10)
         x = 1.01 .* X,
         y = 1.01 .* Y,
         z = 1.01 .* Z,
-        contours = attr(
-            geo = attr(
-                show = true,
-                size = 0.05
-            )
-        ),
+        surfacecolor = data_field',
         showscale = true,
         opacity = 0.5,
     )
@@ -166,10 +160,69 @@ function get_outlines(geo_dat)
     return round.(Int, outlines)
 end
 
+function plot_albedo_3d(albedo, surface_data, radius=10)
 
+    lat_resolution, long_resolution = size(surface_data)
+
+    latitude = range(0, pi, lat_resolution)
+    longitude = range(0, 2*pi, long_resolution)
+
+    lat_grid = latitude'.*ones(long_resolution)
+    long_grid = ones(lat_resolution)'.*longitude
+
+    X = radius*sin.(lat_grid).*cos.(long_grid)
+    Y = radius*sin.(lat_grid).*sin.(long_grid)
+    Z = radius*cos.(lat_grid)
+
+
+    fig1 = PlotlyJS.surface(
+        x = X,
+        y = Y,
+        z = Z,
+        surfacecolor = surface_data',
+        showscale = false,
+        colorscale = [
+            [0, "rgb(255,255,255)"], # no border
+            [1,"rgb(0,0,0)" ], # continent border
+        ],
+    )
+    
+    fig2 = PlotlyJS.surface(
+        x = 1.01 .* X,
+        y = 1.01 .* Y,
+        z = 1.01 .* Z,
+        surfacecolor = albedo',
+        showscale = true,
+        opacity = 0.5,
+        colorscale = [
+            [0, "rgb(0,0,0)"], # black, nothing reflected
+            [1,"rgb(255,255,255)" ], # white, everything reflected
+        ]
+    )
+    
+    layout = Layout(
+                scene = attr(
+                    xaxis = attr(
+                        visible = false
+                    ),
+                    yaxis = attr(
+                        visible = false
+                    ),
+                    zaxis = attr(
+                        visible = false
+                    ),
+                ),
+                paper_bgcolor = "black"
+            )
+
+
+    PlotlyJS.plot([fig1,fig2], layout)   
+
+end
 
 geo = readdlm("input/The_World128x65.dat")
 
-#plot_earth(geo, 10)
-plot_data_field(ones(65,128), get_outlines(geo),10)
+albedo = calc_albedo(geo)
 
+#plot_data_field(fake_temps, get_outlines(geo),10)
+plot_albedo_3d(albedo, get_outlines(geo))
