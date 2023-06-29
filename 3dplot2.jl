@@ -10,6 +10,8 @@ using DelimitedFiles
 # Welt höher aufgelöst
 # Dokumentation
 # Scientific programming standard (s. Website)
+# Himmel/Sterne/Weltall anzeigen
+# Solar mechanics ?
 
 function plot_earth(surface_data, radius)
 
@@ -49,7 +51,11 @@ function plot_earth(surface_data, radius)
                 "snow cover",
                 "lakes",
                 "ocean"
-            ]
+            ],
+            tickfont = (
+                color = "rgb(255,255,255)",
+                size = 15
+            )
         )
     )
     
@@ -78,6 +84,7 @@ function plot_earth(surface_data, radius)
                         visible = false
                     ),
                 ),
+                paper_bgcolor = "black"
             )
 
 
