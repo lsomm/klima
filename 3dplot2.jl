@@ -89,7 +89,87 @@ function plot_earth(surface_data, radius)
 
 
     PlotlyJS.plot([fig1,fig2], layout)   
+end
+
+function plot_data_field(data_field, surface_data, radius=10)
+
+    lat_resolution, long_resolution = size(surface_data)
+
+    latitude = range(0, pi, lat_resolution)
+    longitude = range(0, 2*pi, long_resolution)
+
+    lat_grid = latitude'.*ones(long_resolution)
+    long_grid = ones(lat_resolution)'.*longitude
+
+    X = radius*sin.(lat_grid).*cos.(long_grid)
+    Y = radius*sin.(lat_grid).*sin.(long_grid)
+    Z = radius*cos.(lat_grid)
+
+
+    fig1 = PlotlyJS.surface(
+        x = X,
+        y = Y,
+        z = Z,
+        surfacecolor = surface_data',
+        showscale = false,
+        colorscale = [
+            [0, "rgb(255,255,255)"], # no border
+            [1,"rgb(0,0,0)" ], # continent border
+        ],
+    )
+    
+    fig2 = PlotlyJS.surface(
+        x = 1.01 .* X,
+        y = 1.01 .* Y,
+        z = 1.01 .* Z,
+        contours = attr(
+            geo = attr(
+                show = true,
+                size = 0.05
+            )
+        ),
+        showscale = true,
+        opacity = 0.5,
+    )
+    
+    layout = Layout(
+                scene = attr(
+                    xaxis = attr(
+                        visible = false
+                    ),
+                    yaxis = attr(
+                        visible = false
+                    ),
+                    zaxis = attr(
+                        visible = false
+                    ),
+                ),
+                paper_bgcolor = "black"
+            )
+
+
+    PlotlyJS.plot([fig1,fig2], layout)   
+
+end
+
+function get_outlines(geo_dat)
+    outlines = zeros(size(geo_dat))
+    for i in 2:64 # Edge cases can be ignored because there is no continent 
+        for j in 2:127
+            if geo[i,j] == 1
+                if ((geo[i,j-1] != 1) || (geo[i,j+1] != 1) || (geo[i-1,j] != 1) || (geo[i+1,j] != 1))
+                    outlines[i,j] = 1
+                end
+            end
+        end
     end
+    return round.(Int, outlines)
+end
+
+
 
 geo = readdlm("input/The_World128x65.dat")
-plot_earth(geo, 10)
+
+#plot_earth(geo, 10)
+plot_data_field(ones(65,128), get_outlines(geo),10)
+
