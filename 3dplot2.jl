@@ -9,6 +9,7 @@ using DelimitedFiles
 # Grid anzeigen?
 # Welt höher aufgelöst
 # Dokumentation
+# Scientific programming standard (s. Website)
 
 function plot_earth(surface_data, radius)
 
