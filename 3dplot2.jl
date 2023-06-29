@@ -1,6 +1,14 @@
 using PlotlyJS
 using DelimitedFiles
 
+
+# TODO
+# animation/gif/slider/schieberegler
+# Nur Ränder plotten als Unterlage
+# In Klimakoffer einbauen / Temperatur/etc plots damit machen
+# Grid anzeigen?
+# Welt höher aufgelöst
+
 function plot_sphere(surface_data, radius)
 
     lat_resolution, long_resolution = size(surface_data)
@@ -22,10 +30,12 @@ function plot_sphere(surface_data, radius)
             [0.25, "rgb(165,255,255)"], #sea ice, icy blue
             [0.5,"rgb(255,255,255)"], #snow, white
             [1,"rgb(26,100,212)" ], #ocean, blue
-        ]
+        ],
+        colorbar = (autotick= false,  tick0= 0, dtick= 1, tickcolor=888,tickvals= [1,2,3,4,5], ticktext=["land","sea ice","snow cover","lakes","ocean"])
     )
     
-    fig2 = PlotlyJS.surface(x=1.01.*X, y=1.01.*Y, z=1.01.*Z,contours = attr(geo=attr(show=true, size=0.05)), showscale=false, opacity=0.0)
+    fig2 = PlotlyJS.surface(x=1.01.*X, y=1.01.*Y, z=1.01.*Z,contours = attr(geo=attr(show=true, size=0.05)), showscale=false, opacity=0.0,
+    )
     layout = Layout(
                 scene=attr(
                     xaxis=attr(
@@ -36,10 +46,14 @@ function plot_sphere(surface_data, radius)
                     ),
                     zaxis=attr(
                         visible=false
-                    )
-                )
+                    ),
+
+     
+                ),
+  
             )
-    
+
+
     PlotlyJS.plot([fig1,fig2], layout)   
     end
 
