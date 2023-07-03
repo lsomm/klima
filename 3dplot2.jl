@@ -348,18 +348,10 @@ albedo = calc_albedo(geo)
 heat_capacity = calc_heat_capacity(geo)
 true_lon = read_true_longitude("input/True_Longitude.dat")
 solar_forcing = calc_solar_forcing(albedo,true_lon)
-#solar_forcing = rand(65,128,length(true_lon))
-#display(solar_forcing[:,:,1])
-#display(solar_forcing[:,:,2])
-
-#plot_data_field(fake_temps, get_outlines(geo),10)
-
-# Parametrisierung
 X,Y,Z = parametrisierung(geo)
 #plot_earth(X,Y,Z,geo) # earth
 #plot_albedo_3d(X,Y,Z, albedo, get_outlines(geo))# albedo
 #plot_heatcapacity_3d(X,Y,Z, heat_capacity, get_outlines(geo)) # heat capacity
-#display(plot_albedo_3d(X,Y,Z,solar_forcing[:,:,20], get_outlines(geo)))
 
 function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
     fig1 = PlotlyJS.surface(
@@ -400,8 +392,8 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
     )
     )
     n_frames = length(solar_forcing[1,1,:]) #Länge von true longs, aber dartauf können wir hier nicht zugreifen, deswegen solar
-    frames  = Vector{PlotlyFrame}(undef, n_slices)
-    for k in 1:n_slices
+    frames  = Vector{PlotlyFrame}(undef, n_frames)
+    for k in 1:n_frames
         frames[k] = PlotlyJS.frame(data=[attr(
                                 surfacecolor = solar_forcing[:,:,k]'
                                  )],
@@ -416,7 +408,7 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
                                    transition=attr(duration= 0))
                                  ],
                               label="$k"
-                             ) for k in 1:n_slices], 
+                             ) for k in 1:n_frames], 
                 active=17,
                 transition= attr(duration= 0 ),
                 x=0, # slider starting position  
@@ -445,100 +437,9 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
             sliders = sliders
         )
 
-    pl= Plot([fig1,initial], layout, frames)
+    pl= Plot([fig1,fig2], layout, frames)
 end
 
 plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing,get_outlines(geo))
 
 
-
-
-
-#=
-n_frames = length(true_lon)
-frames  = Vector{PlotlyFrame}(undef, n_frames)
-for k in 1:n_frames
-    frames[k] = frame(
-                    data = [
-                        attr(
-                            surfacecolor = solar_forcing[:,:,n_frames]'
-                        )
-                    ],  
-                    name = "fr$k",
-                    traces = [0],
-                    layout = [
-                        attr(
-                            surfacecolor = solar_forcing[:,:,n_frames]'
-                        )
-                    ], 
-                )
-end
-
-
-updatemenus = [attr(type="buttons", 
-                    active=0,
-                    y=1,  #(x,y) button position 
-                    x=1.1,
-                    buttons=[attr(label="Play",
-                                  method="animate",
-                                  args=[nothing,
-                                        attr(frame=attr(duration=5, 
-                                                        redraw=true),
-                                             transition=attr(duration=0),
-                                             fromcurrent=true,
-                                             mode="immediate"
-                                                        )])])];
-
-
-sliders = [attr(active=0, 
-                minorticklen=0,
-                
-                steps=[attr(label="f$k",
-                            method="animate",
-                            args=[["fr$k"], # match the frame[:name]
-                                  attr(mode="immediate",
-                                       transition=attr(duration=0),
-                                       frame=attr(duration=5, 
-                                                  redraw=true))
-                                 ]) for k in 1:n_frames ]
-             )];    
-#=
-ym, yM = extrema(Y)
-layout = Layout(title_text="Test", title_x=0.5,
-    width=700, height=450,
-              xaxis_range=[-0.1, 10.1], 
-              yaxis_range=[ym-1, yM+1],
-              updatemenus=updatemenus,
-              sliders=sliders
-    )=#
-
-layout = Layout(
-            scene = attr(
-                xaxis = attr(
-                    visible = false
-                ),
-                yaxis = attr(
-                    visible = false
-                ),
-                zaxis = attr(
-                    visible = false
-                ),
-            ),
-            paper_bgcolor = "black",
-            updatemenus = updatemenus,
-            sliders = sliders
-        )
-
-#pl = plot(fig2, layout)
-
-#display(pl)
-
-#savejson(pl, "plot.json")
-
-#pl = plot_from_json("plot.json")
-#sleep(0.5)
-
-pl = Plot(fig2, layout, frames)
-
-#pl = PlotlyJS.plot([fig1,fig2], layout)   
-=#
