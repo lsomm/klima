@@ -461,7 +461,21 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
             len = 1.0 #slider length
         )    
     ];
-        
+    
+    updatemenus = [attr(type="buttons", 
+    active=0,
+    y=0.0,  #(x,y) button position 
+    x=1,
+    buttons=[attr(label="Play",
+                  method="animate",
+                  args=[nothing,
+                        attr(frame=attr(duration=5, 
+                                        redraw=true),
+                             transition=attr(duration=0),
+                             fromcurrent=true,
+                             mode="immediate"
+                                        )])])];
+
     layout = Layout(
             scene = attr(
                 xaxis = attr(
@@ -476,6 +490,7 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
             ),
             paper_bgcolor = "black",
             sliders = sliders,
+            updatemenus = updatemenus
     )
 
     return Plot([fig1,fig2], layout, frames)
