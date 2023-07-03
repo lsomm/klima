@@ -378,6 +378,9 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
         showscale = true,
         opacity = 0.8,
         colorscale = "Hot",
+        cmax = vmax,
+        cmin = vmin,
+        title = "test",
         colorbar = (
             autotick = false, 
             tickcolor = 888,
@@ -396,19 +399,21 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
     
     frames  = Vector{PlotlyFrame}(undef, n_frames)
     for k in 1:n_frames
-        day = (round(Int, (k - 1) / k * 365) + 80) % 365
+        day = (round(Int, (k - 1) / n_frames * 365) + 80) % 365
         frames[k] = PlotlyJS.frame(
                         data = [
                             attr(
                                 surfacecolor = solar_forcing[:,:,k]',
-                                title = "Solar forcing on day $day"
+                                
+            
+                                colorbar = attr(
+                                    title = "Solar forcing on day $day",
+                                )
                             )
                         ],
                         layout = [
                             attr(
-                                colorbar = attr(
-                                    title = "Solar forcing on day $day"
-                                )
+                                    title_text = "Solar forcing on day $day"
                             )
                         ],
                         name="fr$k",
@@ -470,12 +475,12 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
                 ),
             ),
             paper_bgcolor = "black",
-            sliders = sliders
-        )
+            sliders = sliders,
+    )
 
-    pl= Plot([fig1,fig2], layout, frames)
+    return Plot([fig1,fig2], layout, frames)
 end
 
-plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing,get_outlines(geo))
+display(plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing,get_outlines(geo)))
 
 
