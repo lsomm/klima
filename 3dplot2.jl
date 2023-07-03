@@ -354,11 +354,15 @@ X,Y,Z = parametrisierung(geo)
 #plot_heatcapacity_3d(X,Y,Z, heat_capacity, get_outlines(geo)) # heat capacity
 
 function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
+
+    vmin = minimum(solar_forcing)
+    vmax = maximum(solar_forcing)
+    n_frames = size(solar_forcing,3) #Länge von true longs, aber dartauf können wir hier nicht zugreifen, deswegen solar
     fig1 = PlotlyJS.surface(
         x = X,
         y = Y,
         z = Z,
-        surfacecolor = get_outlines(geo)',
+        surfacecolor = get_outlines(surface_data)',
         showscale = false,
         colorscale = [
             [0, "rgb(255,255,255)"], # no border
@@ -367,59 +371,91 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
     )
 
     fig2 = PlotlyJS.surface(
-    x = 1.01 .* X,
-    y = 1.01 .* Y,
-    z = 1.01 .* Z,
-    surfacecolor = solar_forcing[:,:,1]',
-    showscale = true,
-    opacity = 0.5,
-    colorscale = [  
-        [0, "rgb(255,255,255)"], # black, nothing reflected
-        [1,"rgb(255,0,0)" ], # white, everything reflected
-    ],
-    colorbar = (
-        autotick = false, 
-        tickcolor = 888,
-        tickfont = (
-            color = "rgb(255,255,255)",
-            size = 15
+        x = 1.01 .* X,
+        y = 1.01 .* Y,
+        z = 1.01 .* Z,
+        surfacecolor = solar_forcing[:,:,1]',
+        showscale = true,
+        opacity = 0.8,
+        colorscale = "Hot",
+        colorbar = (
+            autotick = false, 
+            tickcolor = 888,
+            tickfont = (
+                color = "rgb(255,255,255)",
+                size = 15
             ),
-        title="albedo",
-        titlefont = (
-            color = "rgb(255,255,255)",
-            size = 15
-            )   
+            title="Solar forcing for day ?",
+            titlefont = (
+                color = "rgb(255,255,255)",
+                size = 15
+            ),
+            titleside = "right"   
+        )
     )
-    )
-    n_frames = length(solar_forcing[1,1,:]) #Länge von true longs, aber dartauf können wir hier nicht zugreifen, deswegen solar
+    
     frames  = Vector{PlotlyFrame}(undef, n_frames)
     for k in 1:n_frames
-        frames[k] = PlotlyJS.frame(data=[attr(
-                                surfacecolor = solar_forcing[:,:,k]'
-                                 )],
-                                 name="fr$k",
-                                 traces=[1])
+        day = (round(Int, (k - 1) / k * 365) + 80) % 365
+        frames[k] = PlotlyJS.frame(
+                        data = [
+                            attr(
+                                surfacecolor = solar_forcing[:,:,k]',
+                                title = "Solar forcing on day $day"
+                            )
+                        ],
+                        layout = [
+                            attr(
+                                colorbar = attr(
+                                    title = "Solar forcing on day $day"
+                                )
+                            )
+                        ],
+                        name="fr$k",
+                        traces=[1]
+                    )
     end    
 
-    sliders = [attr(steps = [attr(method= "animate",
-                              args= [["fr$k"],                           
-                              attr(mode= "immediate",
-                                   frame= attr(duration=40, redraw= true),
-                                   transition=attr(duration= 0))
-                                 ],
-                              label="$k"
-                             ) for k in 1:n_frames], 
-                active=17,
-                transition= attr(duration= 0 ),
-                x=0, # slider starting position  
-                y=0, 
-                currentvalue=attr(font=attr(size=12), 
-                                  prefix="slice: ", 
-                                  visible=true, 
-                                  xanchor= "center"
-                                 ),  
-               len=1.0) #slider length
-           ];
+    sliders = [
+        attr(
+            steps = [
+                attr(
+                    method = "animate",
+                    args= [
+                        [
+                            "fr$k"
+                        ],                           
+                        attr(
+                            mode = "immediate",
+                            frame = attr(
+                                duration = 40,
+                                redraw = true
+                            ),
+                            transition = attr(
+                                duration = 0
+                            )
+                        )
+                    ],
+                    label = "$k"
+                )
+            for k in 1:n_frames], 
+            active = 17,
+            transition = attr(
+                duration = 0
+            ),
+            x=0, # slider starting position  
+            y=0, 
+            currentvalue = attr(
+                font = attr(
+                        size = 12
+                    ), 
+                prefix = "Step: ", 
+                visible = true, 
+                xanchor = "center"
+            ),  
+            len = 1.0 #slider length
+        )    
+    ];
         
     layout = Layout(
             scene = attr(
