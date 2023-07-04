@@ -265,6 +265,7 @@ end
 function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
 
     cmin, cmax = extrema(solar_forcing)
+    
     n_frames = size(solar_forcing, 3) #Länge von true longs, aber dartauf können wir hier nicht zugreifen, deswegen solar
     
     fig1 = PlotlyJS.surface(
@@ -501,6 +502,194 @@ function plot_diffusioncoefficient_3d(X,Y,Z, diffusion_coefficient, surface_data
     return PlotlyJS.plot([fig1,fig2], layout)   
 end
 
+function annual_temperature_pointwise(nlatitude, nlongitude, ntimesteps, heat_capacity, solar_forcing, radiative_cooling)
+    # Calculate annual temperature for every grid point
+    annual_temperature_pointwise = Array{Float64, 3}(undef, nlatitude, nlongitude,
+                                                     ntimesteps)
+    for j in 1:nlongitude, i in 1:nlatitude
+        # I/O in Julia is pretty slow, so this takes forever with `verbose=true`.
+        annual_temperature, _ = compute_equilibrium(timestep_euler_forward,
+                                                    heat_capacity[i, j],
+                                                    solar_forcing[i, j, :],
+                                                    radiative_cooling,
+                                                    verbose=false)
+
+        annual_temperature_pointwise[i, j, :] = annual_temperature
+    end
+    return annual_temperature_pointwise
+end
+
+function plot_temperature_3d_anim(X,Y,Z,temp, surface_data)
+
+    cmin, cmax = extrema(temp)
+    if (abs(cmax)> abs(cmin))
+        cmin = -cmax
+    else
+        cmax = -cmin
+    end
+
+    n_frames = size(temp, 3) #Länge von true longs, aber dartauf können wir hier nicht zugreifen, deswegen solar
+    
+    fig1 = PlotlyJS.surface(
+        x = X,
+        y = Y,
+        z = Z,
+        surfacecolor = get_outlines(surface_data)',
+        showscale = false,
+        colorscale = [
+            [0, "rgb(255,255,255)"], # no border
+            [1,"rgb(0,0,0)" ], # continent border
+        ],
+    )
+
+    fig2 = PlotlyJS.surface(
+        x = 1.01 .* X,
+        y = 1.01 .* Y,
+        z = 1.01 .* Z,
+        surfacecolor = temp[:,:,1]',
+        showscale = true,
+        opacity = 0.8,
+        colorscale = "RdBu",
+        cmax = cmax,
+        cmin = cmin,
+        colorbar = (
+            autotick = false, 
+            tickcolor = 888,
+            tickfont = (
+                color = "rgb(255,255,255)",
+                size = 20
+            ),
+            title="[ ° C ]",
+            titlefont = (
+                color = "rgb(255,255,255)",
+                size = 20
+            ),
+            titleside = "right"   
+        )
+    )
+
+    
+
+    sliders = [
+        attr(
+            steps = [
+                attr(
+                    method = "animate",
+                    args= [
+                        [
+                            "fr$k"
+                        ],                           
+                        attr(
+                            mode = "immediate",
+                            frame = attr(
+                                duration = 40,
+                                redraw = true
+                            ),
+                            transition = attr(
+                                duration = 0
+                            )
+                        )
+                    ],
+                    label = "$k"
+                )
+            for k in 1:n_frames], 
+            active = 17,
+            transition = attr(
+                duration = 0
+            ),
+            x=0, # slider starting position  
+            y=0, 
+            currentvalue = attr(
+                font = attr(
+                        size = 12
+                    ), 
+                prefix = "Step: ", 
+                visible = true, 
+                xanchor = "center"
+            ),  
+            len = 1.0 #slider length
+        )    
+    ];
+    
+    updatemenus = [
+        attr(
+            type = "buttons", 
+            active = 0,
+            y = 0.0,  #(x,y) button position 
+            x = 1,
+            buttons = [
+                attr(
+                    label = "Play",
+                    method = "animate",
+                    args = [
+                        nothing,
+                        attr(
+                            frame = attr(
+                                duration = 5, 
+                                redraw = true
+                            ),
+                            transition = attr(
+                                duration = 0
+                            ),
+                            fromcurrent = true,
+                            mode = "immediate"
+                        )
+                    ]
+                )
+            ]
+        )
+    ];
+
+
+
+    frames  = Vector{PlotlyFrame}(undef, n_frames)
+    for k in 1:n_frames
+        day = (round(Int, (k - 1) / n_frames * 365) + 80) % 365
+        frames[k] = PlotlyJS.frame(
+                        data = [
+                            attr(
+                                surfacecolor = temp[:,:,k]',            
+                                colorbar = attr(
+                                    #title = "Day $day",
+                                )
+                            )
+                        ],
+                        layout = attr(
+                            title_text = "Temperature - Day $day"
+                        ),
+                        name="fr$k",
+                        traces=[1],
+                    )
+    end    
+
+    layout = Layout(
+        scene = attr(
+            xaxis = attr(
+                visible = false
+            ),
+            yaxis = attr(
+                visible = false
+            ),
+            zaxis = attr(
+                visible = false
+            ),
+        ),
+        paper_bgcolor = "black",
+        sliders = sliders,
+        title = attr(
+            text = "Temperature",
+            y=0.95,
+            x=0.5
+        ),
+        titlefont = (
+            color = "rgb(255,255,255)",
+            size = 40
+            ),
+        updatemenus = updatemenus
+    )
+
+    return Plot([fig1,fig2], layout, frames)
+end
 
 geo = readdlm("input/The_World128x65.dat")
 
@@ -514,16 +703,21 @@ outlines = get_outlines(geo)
 co2_ppm = 315.0
 radiative_cooling = calc_radiative_cooling_co2(co2_ppm)
 
-# temperature = annual_temperature_pointswise(nlatitude, nlongitude,ntimesteps,heat_capacity,solar_forcing,radiative_cooling)
+nlatitude, nlongitude = size(geo)
+ntimesteps = length(true_lon)
 
-diffusion_coefficient = calc_diffusion_coefficients(geo)
+temperature = annual_temperature_pointwise(nlatitude, nlongitude,ntimesteps,heat_capacity,solar_forcing,radiative_cooling)
+
+# display(plot_temperature_3d_anim(X,Y,Z,temperature, outlines))
+#diffusion_coefficient = calc_diffusion_coefficients(geo)
 
 #display(plot_earth(X,Y,Z,geo)) # earth
 #display(plot_albedo_3d(X,Y,Z, albedo, get_outlines(geo)))# albedo
 #display(plot_heatcapacity_3d(X,Y,Z, heat_capacity, get_outlines(geo))) # heat capacity
-display(plot_diffusioncoefficient_3d(X,Y,Z, diffusion_coefficient, outlines))
+#display(plot_diffusioncoefficient_3d(X,Y,Z, diffusion_coefficient, outlines))
 
 
-# display(plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing,get_outlines(geo)))
+# display(plot_solar_forcing_3d_anim(X,Y,Z,temperature,get_outlines(geo)))
 
+display(plot_temperature_3d_anim(X,Y,Z,temperature,outlines))
 
