@@ -1,17 +1,22 @@
 using PlotlyJS
 using DelimitedFiles
-using JSON
+using LaTeXStrings
 
 include("milestone2.jl")
 # TODO
-# animation/gif/slider/schieberegler
-# In Klimakoffer einbauen / Temperatur/etc plots damit machen
-# Grid anzeigen?
-# Welt höher aufgelöst
+# Welt höher aufgelöst 
 # Dokumentation
 # Scientific programming standard (s. Website)
 # Himmel/Sterne/Weltall anzeigen
 # Solar mechanics ?
+# Überschriften 
+# difussion coefficient plot
+# Bedienungsanleitung (insb. wir können andere unser benutzen?)
+# Diskrete Skala für Erde
+# Am Anfang einmal transponieren, als immer
+# Unterliegende Erde funktion schreiben
+# Opacity vereinheitlichen?
+# Latex strings?
 
 function parametrisierung(surface_data, radius=10)
 
@@ -32,19 +37,6 @@ function parametrisierung(surface_data, radius=10)
 end
 
 function plot_earth(X,Y,Z,surface_data)
-    #=
-    lat_resolution, long_resolution = size(surface_data)
-
-    latitude = range(0, pi, lat_resolution)
-    longitude = range(0, 2*pi, long_resolution)
-
-    lat_grid = latitude'.*ones(long_resolution)
-    long_grid = ones(lat_resolution)'.*longitude
-
-    X = radius*sin.(lat_grid).*cos.(long_grid)
-    Y = radius*sin.(lat_grid).*sin.(long_grid)
-    Z = radius*cos.(lat_grid)
-    =#
 
     fig1 = PlotlyJS.surface(
         x = X,
@@ -54,8 +46,8 @@ function plot_earth(X,Y,Z,surface_data)
         colorscale = [
             [0, "rgb(60,149,33)"], #land, green
             [0.25, "rgb(165,255,255)"], #sea ice, icy blue
-            [0.5,"rgb(255,255,255)"], #snow, white
-            [1,"rgb(26,100,212)" ], #ocean, blue
+            [0.5, "rgb(255,255,255)"], #snow, white
+            [1, "rgb(26,100,212)" ], #ocean, blue
         ],
         colorbar = (
             autotick = false, 
@@ -77,19 +69,6 @@ function plot_earth(X,Y,Z,surface_data)
         )
     )
     
-    fig2 = PlotlyJS.surface(
-        x = 1.01 .* X,
-        y = 1.01 .* Y,
-        z = 1.01 .* Z,
-        contours = attr(
-            geo = attr(
-                show = true,
-                size = 0.05
-            )
-        ),
-        showscale = false,
-        opacity = 0.0,
-    )
     layout = Layout(
                 scene = attr(
                     xaxis = attr(
@@ -102,68 +81,19 @@ function plot_earth(X,Y,Z,surface_data)
                         visible = false
                     ),
                 ),
-                paper_bgcolor = "black"
-            )
-
-
-    PlotlyJS.plot([fig1,fig2], layout)   
-end
-
-function plot_data_field(X,Y,Z, data_field, surface_data)
-    # function plot_data_field(data_field, surface_data, radius=10)
-    #=
-    lat_resolution, long_resolution = size(surface_data)
-
-    latitude = range(0, pi, lat_resolution)
-    longitude = range(0, 2*pi, long_resolution)
-
-    lat_grid = latitude'.*ones(long_resolution)
-    long_grid = ones(lat_resolution)'.*longitude
-
-    X = radius*sin.(lat_grid).*cos.(long_grid)
-    Y = radius*sin.(lat_grid).*sin.(long_grid)
-    Z = radius*cos.(lat_grid)
-    =#
-
-    fig1 = PlotlyJS.surface(
-        x = X,
-        y = Y,
-        z = Z,
-        surfacecolor = surface_data',
-        showscale = false,
-        colorscale = [
-            [0, "rgb(255,255,255)"], # no border
-            [1,"rgb(0,0,0)" ], # continent border
-        ],
-    )
-    
-    fig2 = PlotlyJS.surface(
-        x = 1.01 .* X,
-        y = 1.01 .* Y,
-        z = 1.01 .* Z,
-        surfacecolor = data_field',
-        showscale = true,
-        opacity = 0.5,
-    )
-    
-    layout = Layout(
-                scene = attr(
-                    xaxis = attr(
-                        visible = false
-                    ),
-                    yaxis = attr(
-                        visible = false
-                    ),
-                    zaxis = attr(
-                        visible = false
-                    ),
+                paper_bgcolor = "black",
+                title = attr(
+                    text = "The Earth",
+                    y=0.95,
+                    x=0.5
                 ),
-                paper_bgcolor = "black"
-            )
+                titlefont = (
+                    color = "rgb(255,255,255)",
+                    size = 40
+                ),
+    )
 
-
-    PlotlyJS.plot([fig1,fig2], layout)   
-
+    return PlotlyJS.plot(fig1, layout)   
 end
 
 function get_outlines(geo_dat)
@@ -181,21 +111,6 @@ function get_outlines(geo_dat)
 end
 
 function plot_albedo_3d(X,Y,Z, albedo, surface_data)
-    # function plot_albedo_3d(albedo, surface_data, radius=10)
-
-    #=
-    lat_resolution, long_resolution = size(surface_data)
-
-    latitude = range(0, pi, lat_resolution)
-    longitude = range(0, 2*pi, long_resolution)
-
-    lat_grid = latitude'.*ones(long_resolution)
-    long_grid = ones(lat_resolution)'.*longitude
-
-    X = radius*sin.(lat_grid).*cos.(long_grid)
-    Y = radius*sin.(lat_grid).*sin.(long_grid)
-    Z = radius*cos.(lat_grid)
-    =#
 
     fig1 = PlotlyJS.surface(
         x = X,
@@ -227,11 +142,12 @@ function plot_albedo_3d(X,Y,Z, albedo, surface_data)
                 color = "rgb(255,255,255)",
                 size = 15
                 ),
+            #=    
             title="albedo",
             titlefont = (
                 color = "rgb(255,255,255)",
                 size = 15
-                )   
+            ) =#  
         )
     )
     
@@ -247,7 +163,16 @@ function plot_albedo_3d(X,Y,Z, albedo, surface_data)
                         visible = false
                     ),
                 ),
-                paper_bgcolor = "black"
+                paper_bgcolor = "black",
+                title = attr(
+                    text = "Surface albedo",
+                    y=0.95,
+                    x=0.5
+                ),
+                titlefont = (
+                    color = "rgb(255,255,255)",
+                    size = 40
+                ),
             )
 
 
@@ -256,21 +181,6 @@ function plot_albedo_3d(X,Y,Z, albedo, surface_data)
 end
 
 function plot_heatcapacity_3d(X,Y,Z, heat_capacity, surface_data)
-    # function plot_heatcapacity_3d(heat_capacity, surface_data, radius=10)
-
-    #=
-    lat_resolution, long_resolution = size(surface_data)
-
-    latitude = range(0, pi, lat_resolution)
-    longitude = range(0, 2*pi, long_resolution)
-
-    lat_grid = latitude'.*ones(long_resolution)
-    long_grid = ones(lat_resolution)'.*longitude
-
-    X = radius*sin.(lat_grid).*cos.(long_grid)
-    Y = radius*sin.(lat_grid).*sin.(long_grid)
-    Z = radius*cos.(lat_grid)
-    =#
 
     heat_capacity_log = log10.(heat_capacity)
 
@@ -298,7 +208,7 @@ function plot_heatcapacity_3d(X,Y,Z, heat_capacity, surface_data)
         z = 1.01 .* Z,
         surfacecolor = heat_capacity_log',
         showscale = true,
-        opacity = 0.8,
+        opacity = 0.7,
         colorscale =[
             [0, "rgb(255,255,255)" ], # white
             [1, "rgb(139,0,0)"], # red 
@@ -312,11 +222,12 @@ function plot_heatcapacity_3d(X,Y,Z, heat_capacity, surface_data)
                 ),
             tickvals = cbar_ticks,
             ticktext = cbar_tick_values,
-            title="heat capacity",
+            title="[ J / m² / K ]",
             titlefont = (
                 color = "rgb(255,255,255)",
-                size = 15
-                )   
+                size = 20
+                ),
+            titleside = "right"   
         )
     )
     
@@ -332,32 +243,27 @@ function plot_heatcapacity_3d(X,Y,Z, heat_capacity, surface_data)
                         visible = false
                     ),
                 ),
-                paper_bgcolor = "black"
-            )
+                paper_bgcolor = "black",
+                title = attr(
+                    text = "Heat capacity",
+                    y=0.95,
+                    x=0.5
+                ),
+                titlefont = (
+                    color = "rgb(255,255,255)",
+                    size = 40
+                ),
+    )
 
-
-    PlotlyJS.plot([fig1,fig2], layout)   
+    return PlotlyJS.plot([fig1,fig2], layout)   
 
 end
 
-
-
-geo = readdlm("input/The_World128x65.dat")
-
-albedo = calc_albedo(geo)
-heat_capacity = calc_heat_capacity(geo)
-true_lon = read_true_longitude("input/True_Longitude.dat")
-solar_forcing = calc_solar_forcing(albedo,true_lon)
-X,Y,Z = parametrisierung(geo)
-#plot_earth(X,Y,Z,geo) # earth
-#plot_albedo_3d(X,Y,Z, albedo, get_outlines(geo))# albedo
-#plot_heatcapacity_3d(X,Y,Z, heat_capacity, get_outlines(geo)) # heat capacity
-
 function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
 
-    vmin = minimum(solar_forcing)
-    vmax = maximum(solar_forcing)
-    n_frames = size(solar_forcing,3) #Länge von true longs, aber dartauf können wir hier nicht zugreifen, deswegen solar
+    cmin, cmax = extrema(solar_forcing)
+    n_frames = size(solar_forcing, 3) #Länge von true longs, aber dartauf können wir hier nicht zugreifen, deswegen solar
+    
     fig1 = PlotlyJS.surface(
         x = X,
         y = Y,
@@ -378,48 +284,25 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
         showscale = true,
         opacity = 0.8,
         colorscale = "Hot",
-        cmax = vmax,
-        cmin = vmin,
-        title = "test",
+        cmax = cmax,
+        cmin = cmin,
         colorbar = (
             autotick = false, 
             tickcolor = 888,
             tickfont = (
                 color = "rgb(255,255,255)",
-                size = 15
+                size = 20
             ),
-            title="Solar forcing for day ?",
+            title="[ W / m² ]",
             titlefont = (
                 color = "rgb(255,255,255)",
-                size = 15
+                size = 20
             ),
             titleside = "right"   
         )
     )
+
     
-    frames  = Vector{PlotlyFrame}(undef, n_frames)
-    for k in 1:n_frames
-        day = (round(Int, (k - 1) / n_frames * 365) + 80) % 365
-        frames[k] = PlotlyJS.frame(
-                        data = [
-                            attr(
-                                surfacecolor = solar_forcing[:,:,k]',
-                                
-            
-                                colorbar = attr(
-                                    title = "Solar forcing on day $day",
-                                )
-                            )
-                        ],
-                        layout = [
-                            attr(
-                                    title_text = "Solar forcing on day $day"
-                            )
-                        ],
-                        name="fr$k",
-                        traces=[1]
-                    )
-    end    
 
     sliders = [
         attr(
@@ -491,25 +374,69 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
         )
     ];
 
+
+
+    frames  = Vector{PlotlyFrame}(undef, n_frames)
+    for k in 1:n_frames
+        day = (round(Int, (k - 1) / n_frames * 365) + 80) % 365
+        frames[k] = PlotlyJS.frame(
+                        data = [
+                            attr(
+                                surfacecolor = solar_forcing[:,:,k]',            
+                                colorbar = attr(
+                                    #title = "Day $day",
+                                )
+                            )
+                        ],
+                        layout = attr(
+                            title_text = "Solar forcing - Day $day"
+                        ),
+                        name="fr$k",
+                        traces=[1],
+                    )
+    end    
+
     layout = Layout(
-            scene = attr(
-                xaxis = attr(
-                    visible = false
-                ),
-                yaxis = attr(
-                    visible = false
-                ),
-                zaxis = attr(
-                    visible = false
-                ),
+        scene = attr(
+            xaxis = attr(
+                visible = false
             ),
-            paper_bgcolor = "black",
-            sliders = sliders,
-            updatemenus = updatemenus
+            yaxis = attr(
+                visible = false
+            ),
+            zaxis = attr(
+                visible = false
+            ),
+        ),
+        paper_bgcolor = "black",
+        sliders = sliders,
+        title = attr(
+            text = "Solar forcing",
+            y=0.95,
+            x=0.5
+        ),
+        titlefont = (
+            color = "rgb(255,255,255)",
+            size = 40
+            ),
+        updatemenus = updatemenus
     )
 
     return Plot([fig1,fig2], layout, frames)
 end
+
+geo = readdlm("input/The_World128x65.dat")
+
+albedo = calc_albedo(geo)
+heat_capacity = calc_heat_capacity(geo)
+true_lon = read_true_longitude("input/True_Longitude.dat")
+solar_forcing = calc_solar_forcing(albedo,true_lon)
+X,Y,Z = parametrisierung(geo)
+#display(plot_earth(X,Y,Z,geo)) # earth
+#display(plot_albedo_3d(X,Y,Z, albedo, get_outlines(geo)))# albedo
+#display(plot_heatcapacity_3d(X,Y,Z, heat_capacity, get_outlines(geo))) # heat capacity
+
+
 
 display(plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing,get_outlines(geo)))
 
