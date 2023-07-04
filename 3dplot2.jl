@@ -708,16 +708,15 @@ ntimesteps = length(true_lon)
 
 temperature = annual_temperature_pointwise(nlatitude, nlongitude,ntimesteps,heat_capacity,solar_forcing,radiative_cooling)
 
-# display(plot_temperature_3d_anim(X,Y,Z,temperature, outlines))
-#diffusion_coefficient = calc_diffusion_coefficients(geo)
+diffusion_coefficient = calc_diffusion_coefficients(geo)
 
-#display(plot_earth(X,Y,Z,geo)) # earth
-#display(plot_albedo_3d(X,Y,Z, albedo, get_outlines(geo)))# albedo
-#display(plot_heatcapacity_3d(X,Y,Z, heat_capacity, get_outlines(geo))) # heat capacity
-#display(plot_diffusioncoefficient_3d(X,Y,Z, diffusion_coefficient, outlines))
+display(plot_earth(X,Y,Z,geo)) # earth
+display(plot_albedo_3d(X,Y,Z, albedo, get_outlines(geo)))# albedo
+display(plot_heatcapacity_3d(X,Y,Z, heat_capacity, get_outlines(geo))) # heat capacity
+display(plot_diffusioncoefficient_3d(X,Y,Z, diffusion_coefficient, outlines))
 
 
-# display(plot_solar_forcing_3d_anim(X,Y,Z,temperature,get_outlines(geo)))
+display(plot_solar_forcing_3d_anim(X,Y,Z,temperature,get_outlines(geo)))
 
 display(plot_temperature_3d_anim(X,Y,Z,temperature,outlines))
 
