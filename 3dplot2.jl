@@ -3,6 +3,8 @@ using DelimitedFiles
 using LaTeXStrings
 
 include("milestone2.jl")
+include("milestone4.jl")
+include("milestone5.jl")
 # TODO
 # Welt höher aufgelöst 
 # Dokumentation
@@ -17,6 +19,7 @@ include("milestone2.jl")
 # Unterliegende Erde funktion schreiben
 # Opacity vereinheitlichen?
 # Latex strings?
+# EInmheitliche font sizes, font sizes variabel machen
 
 function parametrisierung(surface_data, radius=10)
 
@@ -425,6 +428,80 @@ function plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing, surface_data)
     return Plot([fig1,fig2], layout, frames)
 end
 
+function plot_diffusioncoefficient_3d(X,Y,Z, diffusion_coefficient, surface_data)
+
+    # vmin = minimum(diffusion_coefficient)
+    # vmax = maximum(diffusion_coefficient)
+
+    fig1 = PlotlyJS.surface(
+        x = X,
+        y = Y,
+        z = Z,
+        surfacecolor = surface_data',
+        showscale = false,
+        colorscale = [
+            [0, "rgb(255,255,255)"], # no border
+            [1,"rgb(0,0,0)" ], # continent border
+        ],
+    )
+    
+    fig2 = PlotlyJS.surface(
+        x = 1.01 .* X,
+        y = 1.01 .* Y,
+        z = 1.01 .* Z,
+        surfacecolor = diffusion_coefficient',
+        showscale = true,
+        opacity = 0.75,
+        colorscale =[
+            [0, "rgb(0,0,255)" ], # blue
+            [1, "rgb(255,255,0)"], # yellow 
+        ],
+        colorbar = (
+            autotick = false, 
+            tickcolor = 888,
+            tickfont = (
+                color = "rgb(255,255,255)",
+                size = 15
+                ),
+            title="[ W / K ]",
+            titlefont = (
+                color = "rgb(255,255,255)",
+                size = 20
+                ),
+            titleside = "right"   
+        )
+    )
+    
+    layout = Layout(
+                scene = attr(
+                    xaxis = attr(
+                        visible = false
+                    ),
+                    yaxis = attr(
+                        visible = false
+                    ),
+                    zaxis = attr(
+                        visible = false
+                    ),
+                ),
+                paper_bgcolor = "black",
+                title = attr(
+                    text = "Diffusion coefficient of the 2D EBM",
+                    x = 0.5,
+                    y = 0.95
+                ),
+                titlefont = (
+                    color = "rgb(255,255,255)",
+                    size = 40
+                    ),
+
+            )
+
+
+    return PlotlyJS.plot([fig1,fig2], layout)   
+end
+
+
 geo = readdlm("input/The_World128x65.dat")
 
 albedo = calc_albedo(geo)
@@ -432,12 +509,21 @@ heat_capacity = calc_heat_capacity(geo)
 true_lon = read_true_longitude("input/True_Longitude.dat")
 solar_forcing = calc_solar_forcing(albedo,true_lon)
 X,Y,Z = parametrisierung(geo)
+area = calc_area(geo) # Compute area-mean quantities
+outlines = get_outlines(geo)
+co2_ppm = 315.0
+radiative_cooling = calc_radiative_cooling_co2(co2_ppm)
+
+# temperature = annual_temperature_pointswise(nlatitude, nlongitude,ntimesteps,heat_capacity,solar_forcing,radiative_cooling)
+
+diffusion_coefficient = calc_diffusion_coefficients(geo)
+
 #display(plot_earth(X,Y,Z,geo)) # earth
 #display(plot_albedo_3d(X,Y,Z, albedo, get_outlines(geo)))# albedo
 #display(plot_heatcapacity_3d(X,Y,Z, heat_capacity, get_outlines(geo))) # heat capacity
+display(plot_diffusioncoefficient_3d(X,Y,Z, diffusion_coefficient, outlines))
 
 
-
-display(plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing,get_outlines(geo)))
+# display(plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing,get_outlines(geo)))
 
 
