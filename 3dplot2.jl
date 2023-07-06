@@ -5,6 +5,7 @@ using LaTeXStrings
 include("milestone2.jl")
 include("milestone4.jl")
 include("milestone5.jl")
+include("milestone6.jl")
 # TODO
 # Welt höher aufgelöst 
 # Dokumentation
@@ -691,6 +692,8 @@ function plot_temperature_3d_anim(X,Y,Z,temp, surface_data)
     return Plot([fig1,fig2], layout, frames)
 end
 
+
+
 geo = readdlm("input/The_World128x65.dat")
 
 albedo = calc_albedo(geo)
@@ -706,9 +709,16 @@ radiative_cooling = calc_radiative_cooling_co2(co2_ppm)
 nlatitude, nlongitude = size(geo)
 ntimesteps = length(true_lon)
 
-temperature = annual_temperature_pointwise(nlatitude, nlongitude,ntimesteps,heat_capacity,solar_forcing,radiative_cooling)
-
+#temperature = annual_temperature_pointwise(nlatitude, nlongitude,ntimesteps,heat_capacity,solar_forcing,radiative_cooling)
 diffusion_coefficient = calc_diffusion_coefficients(geo)
+diffusion_coeff = diffusion_coefficient
+
+mesh = Mesh(geo)
+
+jacobian = calc_jacobian_ebm_2d(mesh, diffusion_coeff, heat_capacity)
+
+temperature,_ = compute_equilibrium_2d(timestep_euler_backward_2d(jacobian, 1/48), mesh, diffusion_coefficient, heat_capacity, solar_forcing, radiative_cooling)
+
 
 display(plot_earth(X,Y,Z,geo)) # earth
 display(plot_albedo_3d(X,Y,Z, albedo, get_outlines(geo)))# albedo
@@ -716,7 +726,7 @@ display(plot_heatcapacity_3d(X,Y,Z, heat_capacity, get_outlines(geo))) # heat ca
 display(plot_diffusioncoefficient_3d(X,Y,Z, diffusion_coefficient, outlines))
 
 
-display(plot_solar_forcing_3d_anim(X,Y,Z,temperature,get_outlines(geo)))
+display(plot_solar_forcing_3d_anim(X,Y,Z,solar_forcing,get_outlines(geo)))
 
 display(plot_temperature_3d_anim(X,Y,Z,temperature,outlines))
 
